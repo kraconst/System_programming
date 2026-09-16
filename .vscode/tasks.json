@@ -1,0 +1,15 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "FASM: Build",
+      "type": "shell",
+      "command": "fasm ${file} ${fileDirname}/${fileBasenameNoExtension}",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

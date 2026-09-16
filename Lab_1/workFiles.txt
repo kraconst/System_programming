@@ -1,0 +1,50 @@
+mkdir Work
+cd Work
+mkdir 'Лабораторная работа №1!'
+mkdir ФИО
+cd ..
+
+chmod u=rwx,g=rwx,o=wx './Work/Лабораторная работа №1!'
+ls -ld './Work/Лабораторная работа №1!'
+drwxrwx-wx 2 const const 4096 Sep 16 16:55 './Work/Лабораторная работа №1!'
+
+chmod u=w,g=,o= ./Work/ФИО
+
+cd Work
+touch 'Text @1'
+touch 'Text $2'
+touch 'Text #3'
+
+echo -e 'Птица говорун отличается умом и сообразительностью!\nОтличается умом, отличается сообразительностью...' > 'Text @1'
+
+cat 'Text @1' >> 'Text $2'
+
+mv 'Text $2' './Лабораторная работа №1!'
+
+sudo cp 'Text @1' ./ФИО
+
+gzip 'Text @1'
+gzip 'Text #3'
+
+tar -cf MyArchive.tar 'Text @1.gz' 'Text #3.gz'
+tar -tf MyArchive.tar
+
+gzip -d 'Text @1.gz'
+gzip -d 'Text #3.gz'
+
+head -n 1 'Text @1' >> 'Text #3'
+
+echo 'Будь осторожен! Преступник вооружен!' >> 'Text #3'
+
+chmod u+x ./ФИО
+tac 'Text @1' > './ФИО/Result_one'
+
+mv ./ФИО/Result_one ./ФИО/Result_two
+
+chmod u+r ./Work/ФИО
+cat ./Work/ФИО/T* > './Work/Лабораторная работа №1!/Result_3'
+
+(uname -a; date) >> './Work/Лабораторная работа №1!/Result_3'
+
+mkdir Lab_1
+mv sandbox Work workFiles.txt Lab_1
