@@ -40,7 +40,7 @@ section '.text' executable
 
             cmp rbx, 14
             jne .iter2
-        call exit
+        jmp exit
 
 exit:
     mov rax, 60

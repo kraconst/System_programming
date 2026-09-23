@@ -20,7 +20,7 @@ section '.text' executable
             pop rcx
             cmp rcx, 0
             jne .iter
-        call exit
+        jmp exit
 
 print_symb:
     mov [char], al
