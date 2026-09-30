@@ -8,7 +8,7 @@ section '.data' writable
     nl db 10 ; \n
 
 section '.bss' writable
-    buffer rb 120 ; специально аллоцируем буфер для заполнения символами (включая \n)
+    buffer rb 105 ; специально аллоцируем буфер для заполнения символами (включая \n)
 
 section '.text' executable
     _start:
@@ -21,9 +21,11 @@ section '.text' executable
             jne .iter1
         xor rbx, rbx ; счетчик с шагом 7 для вывода символов блоками
         .iter2:
-            mov rax, 1
+            mov rax, buffer
             mov rdi, 1
-            lea rsi, [buffer + rbx] ; вычисляет динамический адрес и кладет его в rsi
+            add rax, rbx
+            mov rsi, rax
+            mov rax, 1
             mov rdx, 7 ; выводим по 7 символов за раз в одной строке
             syscall
 

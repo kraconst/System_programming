@@ -12,7 +12,7 @@ unsigned int sumOfDigits(unsigned long long num) {
 }
 
 int main(void) {
-    unsigned long long number = 3469816182ULL;
+    unsigned long long number = 3469816182;
 
     unsigned int ans = sumOfDigits(number);
     printf("%u\n", ans);

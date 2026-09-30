@@ -6,6 +6,7 @@ public exit
 section '.data' writable
     num dd 3469816182 ; беззнаковое представление, укладывается в 32 бита
     ten db 1
+    nl db 10
 
 section '.bss' writable
     result rb 2 ; буфер для строки, состоящей из цифр ответа (суммы)
@@ -41,6 +42,13 @@ section '.text' executable
         mov rsi, result ; выводим последовательность символов суммы в виде строки
         mov rdx, 2
         syscall
+
+        mov rax, 1
+        mov rdi, 1
+        mov rsi, nl
+        mov rdx, 1
+        syscall
+
     jmp exit
 
 exit:
