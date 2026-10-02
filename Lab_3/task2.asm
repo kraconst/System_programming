@@ -19,54 +19,54 @@ section '.text' executable
         jl exit
 
         pop rdx ; имя исполняемого файла
-        pop rdi
-        pop rsi
+        pop rdi ; указатель на строку с первым операндом - b
+        pop rsi ; указатель на строку со вторым операндом - c
         xor rbx, rbx
         xor rcx, rcx
 
-        call func_atoi
-        mov rbx, rax
+        call func_atoi ; на вход передается адрес первого байта первого аргумента в rdi
+        mov rbx, rax ; сохраняем первый операнд в rbx
 
-        mov rdi, rsi
+        mov rdi, rsi ; кладем адрес первого байта второго аргумента в rdi
         call func_atoi
-        mov rcx, rax
+        mov rcx, rax ; сохраняем второй операнд в rcx
 
-        call calculate
+        call calculate ; находим значение арифметического выражения
         jmp exit
 
-func_atoi:
+func_atoi: ; парсит число из строки, принимая адрес начала строки в rdi и аккумулируя число в rax
     push r8
     push rbx
     push rcx
     push rsi
 
-    xor rax, rax
+    xor rax, rax ; на выходе в rax будет лежать наше число
     xor rbx, rbx
     mov rbx, 10
     xor rcx, rcx
-    @@:
+    @@: ; безымянная метка
         xor r8, r8
-        mov r8b, byte [rdi + rcx]
+        mov r8b, byte [rdi + rcx] ; кладем каждый символ по адресу, начиная с rdi
 
-        cmp r8, '0'
-        jb @f
+        cmp r8, '0' ; проверяем, принадлежит ли символ нашему числу
+        jb @f ; если это, к примеру, ' ', то переходим на ближайшую безымянную метку впереди
         cmp r8, '9'
-        ja @f
+        ja @f ; аналогично, это значит, что число уже сформировалось
 
-        sub r8, '0'
-        mul rbx
-        add rax, r8
+        sub r8, '0' ; получаем саму цифру числа
+        mul rbx ; умножает значение в rax на 10
+        add rax, r8 ; и прибавляет следующую цифру, аккумулируя число
         inc rcx
-        jmp @b
+        jmp @b ; переходим на ближайшую безымянную метку сзади, то есть на следующую итерацию цикла
 
-    @@:
+    @@: ; безымянная метка
         pop rsi
         pop rcx
         pop rbx
         pop r8
         ret
 
-calculate:
+calculate: ; считает значение арифметического выражения, сохраняя его в регистр rax
     push rax
     push rdx
     push rdi
@@ -77,14 +77,14 @@ calculate:
     add rax, rbx
     mul rbx
     sub rax, rcx
-    call print_itoa
+    call print_itoa ; и передаем управление функции вывода
     pop rsi
     pop rdi
     pop rdx
     pop rax
-    ret
+    ret ; берет из верхушки стека адрес возврата и переходит по нему
 
-print_itoa:
+print_itoa: ; переводит число в последовательность символов, которую записывает в буфер для дальнейшего вывода на экран
     push rbx
     push rdi
     push rsi
@@ -93,16 +93,16 @@ print_itoa:
     xor rbx, rbx
     mov rbx, 10
     xor rcx, rcx
-    @@:
-        xor rdx, rdx
-        div rbx
-        add rdx, '0'
-        mov [result + rcx], dl
+    @@: ; безымянная метка
+        xor rdx, rdx ; очищаем для остатка
+        div rbx ; 8-байтовый делитель
+        add rdx, '0' ; переводим каждую цифру в символ
+        mov [result + rcx], dl ; записываем в обратном порядке в буфер
         inc rcx
-        cmp rax, 0
+        cmp rax, 0 ; пока частное не обнулится
         ja @b
 
-    @@:
+    @@: ; безымянная метка
         dec rcx
         mov rax, result
         add rax, rcx
@@ -111,14 +111,14 @@ print_itoa:
         mov rax, 1
         mov rdx, 1
         push rcx
-        syscall
+        syscall ; побайтовый вывод ответа из буфера
         pop rcx
         cmp rcx, 0
-        ja @b
+        ja @b ; переход на ближайшую безымянную метку назад
 
     mov rax, 1
     mov rdi, 1
-    mov rsi, nl
+    mov rsi, nl ; вывод \n
     mov rdx, 1
     syscall
 

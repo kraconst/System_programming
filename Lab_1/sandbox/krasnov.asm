@@ -1,4 +1,4 @@
-format ELF
+format ELF64
 public _start
 
 fio_msg db "Krasnov", 0xA, \
@@ -7,12 +7,27 @@ fio_msg db "Krasnov", 0xA, \
 fio_len = $ - fio_msg
 
 _start:
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, fio_msg
-    mov edx, fio_len
-    int 0x80
+    xor rcx, rcx
+    @@:
+        mov rsi, fio_msg
+        add rsi, rcx
+        inc rcx
+        cmp byte [rsi], 0xA
+        jne @b
 
-    mov eax, 1
-    xor ebx, ebx
-    int 0x80
+    mov r8, rcx
+    inc r8
+    .loop:
+        dec r8
+        mov rax, 1
+        mov rdi, 1
+        mov rsi, fio_msg
+        add rsi, r8
+        mov rdx, 1
+        syscall
+        cmp r8, 0
+        ja .loop
+
+    mov rax, 60
+    xor rdi, 0
+    syscall

@@ -12,36 +12,36 @@ section '.bss' writable
 
 section '.text' executable
     _start:
-        pop rax
-        cmp rax, 2
+        pop rax ; извлекаем из стека количество переданных аргументов командной строки
+        cmp rax, 2 ; если меньше 2, выходим
         jl exit
 
-        pop rbx
-        pop rdi
+        pop rbx ; извлекаем имя программы
+        pop rdi ; извлекаем адрес первого байта переданного символа
         xor rbx, rbx
 
-        mov bl, byte [rdi]
+        mov bl, byte [rdi] ; кладем в bl ASCII-код символа
         call print_itoa
         jmp exit
 
 print_itoa:
-    push rax
+    push rax ; пушим все регистры в стек, чтобы не изменять внешнее состояние программы
     push rdi
     push rsi
     push rcx
     push rdx
-    mov rdx, 10
+    mov rdx, 10 ; делитель
     xor rcx, rcx
     xor rax, rax
-    mov ax, bx
-    @@:
-        xor ah, ah
-        div dl
-        add ah, '0'
-        mov [string + rcx], ah
+    mov ax, bx ; кладем делимое в ax
+    @@: ; безымянная метка
+        xor ah, ah ; обнуляем старшую часть делимого перед делением
+        div dl ; беззнаковое деление на 10
+        add ah, '0' ; переводим каждую цифру ASCII-кода в символ (ASCII-код символа)
+        mov [string + rcx], ah ; помещаем в буфер строки для дальнейшего вывода
         inc rcx
-        cmp al, 0
-        ja @b
+        cmp al, 0 ; пока частное от деления не обнулится
+        ja @b ; переходим на ближайшую сзади безымянную метку
 
     @@:
         dec rcx
@@ -50,7 +50,7 @@ print_itoa:
         mov rdi, 1
         mov rsi, rax
         mov rax, 1
-        mov rdx, 1
+        mov rdx, 1 ; побайтовый вывод строки с конца (в правильной последовательности цифр)
         push rcx
         syscall
         pop rcx
@@ -59,13 +59,13 @@ print_itoa:
 
     mov rax, 1
     mov rdi, 1
-    mov rsi, nl
+    mov rsi, nl ; переход на следующую строку
     mov rdx, 1
     syscall
 
     pop rdx
     pop rcx
-    pop rsi
+    pop rsi ; возвращаем обратно исходные значения в регистрах
     pop rdi
     pop rax
     ret
