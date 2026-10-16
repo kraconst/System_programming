@@ -71,6 +71,61 @@ input_keyboard:
     pop rax
     ret
 
+; Функция реверса строки
+; Вход: rsi — указатель на строку (заканчивается байтом 0)
+; Выход: строка по адресу rsi развернута в обратном порядке
+reverse_string:
+    push rax
+    push rbx
+    push rcx
+    push rdx
+    push rsi
+    push rdi
+
+    ; Проверка: если указатель равен нулю, выходим
+    mov rax, rsi
+    cmp rax, 0
+    je .done
+
+    mov rcx, rsi        ; rcx — левый указатель (начало строки)
+    mov rdx, rsi        ; rdx — правый указатель (будем искать конец)
+
+    .find_end:
+        mov al, byte [rdx]
+        cmp al, 0
+        je .found_end
+        inc rdx
+        jmp .find_end
+
+    .found_end:
+        ; Если строка пустая (начало совпадает с концом)
+        cmp rcx, rdx
+        je .done
+
+        dec rdx             ; rdx теперь указывает на последний реальный символ строки (перед '\0')
+
+    .swap_loop:
+        cmp rcx, rdx
+        jge .done           ; если левый указатель дошел до правого или перешагнул его — закончили
+
+        mov al, byte [rcx]  ; читаем символ слева
+        mov bl, byte [rdx]  ; читаем символ справа
+        mov byte [rcx], bl  ; записываем правый символ на место левого
+        mov byte [rdx], al  ; записываем левый символ на место правого
+
+        inc rcx             ; сдвигаем левый указатель вправо
+        dec rdx             ; сдвигаем правый указатель влево
+        jmp .swap_loop
+
+    .done:
+        pop rdi
+        pop rsi
+        pop rdx
+        pop rcx
+        pop rbx
+        pop rax
+        ret
+
 print_itoa:
     push rbx
     push rdi
