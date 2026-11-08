@@ -38,7 +38,7 @@ generate_elems:
 
     mov rax, 2
     mov rdi, rnd
-    mov rsi, 0o
+    mov rsi, 0o ; O_RDONLY
     syscall
     cmp rax, 0
     jl .done ; не удалось открыть /dev/random

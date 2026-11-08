@@ -27,6 +27,7 @@ sum_of_series:
     push rdx
     push r8
     push r9
+    push r10
     push rdi
 
     xor rcx, rcx
@@ -35,30 +36,33 @@ sum_of_series:
     mov rdi, 2
     mov r8, rax ; n
     xor rax, rax ; накопитель
+    mov r10, 1
     .loop:
         inc rcx
         push rax
 
         mov rax, rcx
         mul rcx ; rax = rcx * rcx
-        mov r9, rax ; r9 = k²
+        mul r10
+        mov r9, rax ; r9 = +-k²
 
-        mov rax, rcx
-        xor rdx, rdx
-        div rdi ; rdx = остаток от деления k на 2
+        ; xor rdx, rdx
+        ; div rdi ; rdx = остаток от деления k на 2
 
         pop rax ; Восстанавливаем сумму в rax
-        cmp rdx, 0
-        je .even
-        add rax, r9 ; для нечетных
-        jmp .next
-        .even:
-            sub rax, r9 ; для четных
-        .next:
-            cmp rcx, r8
-            jl .loop
+        ; cmp rdx, 0
+        ; je .even
+        add rax, r9
+
+        ; .even:
+        ;     sub rax, r9 ; для четных
+        ; .next:
+        neg r10
+        cmp rcx, r8
+        jl .loop
 
     pop rdi
+    pop r10
     pop r9
     pop r8
     pop rdx
