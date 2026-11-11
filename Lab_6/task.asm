@@ -7,18 +7,14 @@ format ELF64
 	extrn init_pair
 	extrn getmaxx
 	extrn getmaxy
-	extrn raw
 	extrn noecho
-	extrn keypad
 	extrn stdscr
 	extrn move
 	extrn getch
-	extrn clear
 	extrn addch
 	extrn refresh
 	extrn endwin
 	extrn exit
-	extrn color_pair
 	extrn cbreak
 	extrn timeout
     extrn usleep
@@ -26,122 +22,122 @@ format ELF64
 
 	section '.bss' writable
 
-	xmax dq 1
-	ymax dq 1
-    x dq 1
-    y dq 1
-    delta_y dq 1
-	palette dq 1
-    delay dq 100000 ; начальная задержка — 100 мс
+	xmax dq 1 ; число столбцов экрана
+	ymax dq 1 ; число строк экрана
+    x dq 1 ; текущий столбец
+    y dq 1 ; текущая строка
+    delta_y dq 1 ; вертикальный шаг: -1 вверх, +1 вниз
+	palette dq 1 ; символ пробела с цветовым атрибутом
+    delay dq 100000 ; задержка в микросекундах, изначально 100 мс
 
     section '.text' executable
         _start:
-            ;; Инициализация
-            call initscr
-            call noecho
-            call cbreak
 
-            ;; Размеры экрана
-            xor rdi, rdi
-            mov rdi, [stdscr]
-            call getmaxx
-            mov [xmax], rax
-            mov rdi, [stdscr]
-            call getmaxy
-            mov [ymax], rax
+            call initscr ; инициализировать экран ncurses
+            call noecho ; отключить отображение вводимых символов
+            call cbreak ; получать ввод без ожидания Enter
 
-            call start_color
 
-            ; init_pair(1, 3, 3) — жёлтая пара
-            mov rdi, 1
-            mov rsi, 3
-            mov rdx, 3
-            call init_pair
+            xor rdi, rdi ; обнулить первый аргумент
+            mov rdi, [stdscr] ; передать указатель на основное окно
+            call getmaxx ; получить число столбцов в eax
+            mov [xmax], rax ; сохранить ширину экрана
+            mov rdi, [stdscr] ; передать указатель на основное окно
+            call getmaxy ; получить число строк в eax
+            mov [ymax], rax ; сохранить высоту экрана
 
-            ; init_pair(2, 2, 2) — зелёная пара
-            mov rdi, 2
-            mov rsi, 2
-            mov rdx, 2
-            call init_pair
+            call start_color ; включить работу с цветами
 
-            mov rax, 0x20
-            or rax, 0x100
-            mov [palette], rax
 
-            mov rax, [xmax]
-            dec rax
-            mov [x], rax
+            mov rdi, 1 ; номер первой цветовой пары
+            mov rsi, 3 ; жёлтый цвет символа
+            mov rdx, 3 ; жёлтый цвет фона
+            call init_pair ; зарегистрировать цветовую пару
 
-            mov rax, [ymax]
-            dec rax
-            mov [y], rax
 
-            mov qword [delta_y], -1
+            mov rdi, 2 ; номер второй цветовой пары
+            mov rsi, 2 ; зелёный цвет символа
+            mov rdx, 2 ; зелёный цвет фона
+            call init_pair ; зарегистрировать цветовую пару
 
-            mov edi, 0
-            call timeout
+            mov rax, 0x20 ; код пробела в младших 8 битах
+            or rax, 0x100 ; добавляем номер первой цветовой пары в биты с 8 по 15
+            mov [palette], rax ; сохраняем в переменную типа chtype
+
+            mov rax, [xmax] ; загрузить число столбцов
+            dec rax ; получить последний допустимый индекс
+            mov [x], rax ; установить крайний правый столбец
+
+            mov rax, [ymax] ; загрузить число строк
+            dec rax ; получить последний допустимый индекс
+            mov [y], rax ; установить нижнюю строку
+
+            mov qword [delta_y], -1 ; задать движение вверх
+
+            mov edi, 0 ; нулевое ожидание ввода
+            call timeout ; настроить неблокирующий getch
 
         .main_loop:
-            mov rdi, [y]
+            mov rdi, [y] ; передаем текущие координаты клетки для отрисовки
             mov rsi, [x]
-            call move
+            call move ; переместить курсор в точку с текущими координатами
 
-            mov rdi, [palette]
-            call addch
-            call refresh
+            mov rdi, [palette] ; передать пробел с цветовым атрибутом
+            call addch ; отрисовать символ с атрибутами в терминале
+            call refresh ; показать изменения в терминале
 
-            mov rdi, [delay]
-            call usleep
-            ;; Сохраняем изображение до нажатия клавиши 'b'
-            .wait_key:
-                call getch ; опрос клавиатуры
-                cmp eax, 'b'
-                jne .accelerate
+            mov rdi, [delay] ; передать текущую задержку
+            call usleep ; выдержать паузу между шагами
 
-                call endwin
-                xor rdi, rdi
-                call exit
+            .wait_key: ; обработка ввода
+                call getch ; прочитать клавишу или получить ERR при отсутствии ввода
+                cmp eax, 'b' ; проверить клавишу выхода
+                jne .accelerate ; если это не b, проверить изменение скорости
 
-            .accelerate:
-                cmp eax, 'o'
-                jne .next
+                call endwin ; восстановить обычный режим терминала
+                xor rdi, rdi ; передать нулевой код завершения
+                call exit ; завершить процесс с переданным кодом
 
-                cmp qword [delay], 10000  ; уже достигли максимальной скорости?
-                jle .reset_delay
+            .accelerate: ; проверка изменения скорости
+                cmp eax, 'o' ; проверить клавишу ускорения
+                jne .next ; при другой клавише перейти к движению
 
-                sub qword [delay], 10000  ; уменьшить задержку на 10 мс
-                jmp .next
+                cmp qword [delay], 10000 ; проверить достижение минимальной задержки
+                jle .reset_delay ; при достижении предела сбросить задержку до начальной
 
-                .reset_delay:
-                    mov qword [delay], 100000
-                    jmp .next
+                sub qword [delay], 10000 ; уменьшить задержку на 10 мс
+                jmp .next ; перейти к расчёту следующей позиции
 
-            .next:
-                mov rbx, [y]
-                add rbx, [delta_y]
+                .reset_delay: ; возврат начальной скорости
+                    mov qword [delay], 100000 ; восстановить задержку 100 мс
+                    jmp .next ; перейти к расчёту следующей позиции
 
-                cmp rbx, 0
-                jl .turn_left
-                cmp rbx, [ymax]
-                jge .turn_left
-                mov [y], rbx
-                jmp .main_loop
+            .next: ; расчёт следующей позиции
+                mov rbx, [y] ; загрузить текущую строку
+                add rbx, [delta_y] ; вычислить предполагаемую следующую координату
 
-            .turn_left:
-                cmp [x], 0
-                jle .beginning
-                sub [x], 1
-                neg qword [delta_y]
-                jmp .main_loop
+                cmp rbx, 0 ; проверить верхнюю границу
+                jl .turn_left ; при выходе выше экрана перейти к повороту
+                cmp rbx, [ymax] ; проверить нижнюю границу
+                jge .turn_left ; при выходе ниже экрана перейти к повороту
+                mov [y], rbx ; иначе обновить текущую ординату
+                jmp .main_loop ; перейти к отрисовке следующей клетки
 
-            .beginning:
-                mov rax, [xmax]
-                dec rax
-                mov [x], rax
-                mov rax, [ymax]
-                dec rax
-                mov [y], rax
-                mov qword [delta_y], -1
+            .turn_left: ; переход в соседний столбец
+                cmp [x], 0 ; проверить достижение первого столбца терминала
+                jle .beginning ; перейти в начальную точку цикла змейки
+                sub [x], 1 ; сдвинуться влево
+                neg qword [delta_y] ; поменять направление движения по вертикали
+                jmp .main_loop ; перейти к отрисовке следующей клетки
 
-                xor qword [palette], 0x300
-                jmp .main_loop
+            .beginning: ; начало нового прохода по экрану
+                mov rax, [xmax] ; загрузить число столбцов
+                dec rax ; получить последний допустимый индекс
+                mov [x], rax ; восстанавливаем абсциссу начальной точки цикла
+                mov rax, [ymax] ; загрузить число строк
+                dec rax ; получить последний допустимый индекс
+                mov [y], rax ; восстанавливаем ординату начальной точки цикла
+                mov qword [delta_y], -1 ; задать движение вверх
+
+                xor qword [palette], 0x300 ; переключить палитру
+                jmp .main_loop ; перейти к отрисовке следующей клетки
