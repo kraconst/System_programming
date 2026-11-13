@@ -46,18 +46,37 @@ section '.text' executable
     xor r12, r12 ; r12 = начало текущего предложения
     xor r13, r13 ; r13 = позиция сканирования
 
-.scan: ; ищем конец предложения
+.scan:
     cmp r13, r10
-    je .scan_end ; буфер просмотрен
+    je .scan_end
     mov bl, byte [buffer+r13]
-    inc r13 ; r13 - позиция сразу за символом
+    inc r13
+
     cmp bl, '.'
-    je .flush
+    je .punctuation
     cmp bl, '!'
-    je .flush
+    je .punctuation
     cmp bl, '?'
-    je .flush
+    je .punctuation
     jmp .scan
+
+.punctuation:
+    cmp r13, r10
+    je .scan_end
+
+    mov bl, byte [buffer+r13]
+    cmp bl, '.'
+    je .consume
+    cmp bl, '!'
+    je .consume
+    cmp bl, '?'
+    je .consume
+
+    jmp .flush
+
+.consume:
+    inc r13
+    jmp .punctuation
 
 .flush: ; предложение - buffer[r12 .. r13)
     xor rbx, rbx
